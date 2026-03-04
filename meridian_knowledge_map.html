@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MERIDIAN — Knowledge Map</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0d14;
+    --surface: #111520;
+    --surface2: #161b2a;
+    --border: #1e2740;
+    --accent: #4f8fff;
+    --accent2: #7c3aed;
+    --accent3: #10b981;
+    --accent4: #f59e0b;
+    --accent5: #ef4444;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --mono: 'Space Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(79,143,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(79,143,255,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Glow orbs */
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(120px);
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.15;
+  }
+  .orb-1 { width: 600px; height: 600px; background: #4f8fff; top: -200px; left: -200px; }
+  .orb-2 { width: 400px; height: 400px; background: #7c3aed; bottom: -100px; right: -100px; }
+  .orb-3 { width: 300px; height: 300px; background: #10b981; top: 40%; left: 60%; }
+
+  header {
+    position: relative;
+    z-index: 10;
+    padding: 40px 60px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .logo {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: var(--accent);
+    text-transform: uppercase;
+    background: rgba(79,143,255,0.08);
+    border: 1px solid rgba(79,143,255,0.2);
+    padding: 6px 14px;
+    border-radius: 3px;
+  }
+
+  header h1 {
+    font-family: var(--mono);
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+
+  header p {
+    color: var(--muted);
+    font-size: 14px;
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.05em;
+  }
+
+  /* Phase nav */
+  .phase-nav {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    gap: 0;
+    padding: 20px 60px;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--border);
+    scrollbar-width: none;
+  }
+  .phase-nav::-webkit-scrollbar { display: none; }
+
+  .phase-btn {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 8px 18px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    border-right: none;
+  }
+  .phase-btn:first-child { border-radius: 4px 0 0 4px; }
+  .phase-btn:last-child { border-radius: 0 4px 4px 0; border-right: 1px solid var(--border); }
+  .phase-btn:hover { color: var(--text); background: var(--surface); }
+  .phase-btn.active { color: white; border-color: transparent; }
+  .phase-btn[data-phase="all"].active { background: var(--accent); }
+  .phase-btn[data-phase="prereq"].active { background: #6366f1; }
+  .phase-btn[data-phase="lib"].active { background: var(--accent3); }
+  .phase-btn[data-phase="sc"].active { background: var(--accent4); }
+  .phase-btn[data-phase="pipe"].active { background: var(--accent2); }
+  .phase-btn[data-phase="pf"].active { background: var(--accent5); }
+
+  /* Main layout */
+  .main {
+    position: relative;
+    z-index: 10;
+    padding: 40px 60px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  /* Domain group */
+  .domain {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--surface);
+    transition: all 0.25s;
+  }
+  .domain.hidden { display: none; }
+
+  .domain-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 24px;
+    cursor: pointer;
+    user-select: none;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    transition: background 0.2s;
+  }
+  .domain-header:hover { background: rgba(255,255,255,0.03); }
+
+  .domain-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .domain-title {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    flex: 1;
+  }
+
+  .domain-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .difficulty-badge {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    padding: 3px 10px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+
+  .phase-tags {
+    display: flex;
+    gap: 4px;
+  }
+
+  .phase-tag {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    opacity: 0.8;
+  }
+
+  .chevron {
+    color: var(--muted);
+    font-size: 12px;
+    transition: transform 0.2s;
+    font-family: var(--mono);
+  }
+  .domain.open .chevron { transform: rotate(90deg); }
+
+  .domain-body {
+    display: none;
+    padding: 0;
+  }
+  .domain.open .domain-body { display: block; }
+
+  /* Topic grid inside domain */
+  .topics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1px;
+    background: var(--border);
+  }
+
+  .topic-card {
+    background: var(--surface);
+    padding: 20px 24px;
+    cursor: pointer;
+    transition: background 0.15s;
+    border: none;
+    text-align: left;
+    color: inherit;
+  }
+  .topic-card:hover { background: rgba(79,143,255,0.05); }
+  .topic-card.highlighted { background: rgba(79,143,255,0.1); border-left: 2px solid var(--accent); }
+
+  .topic-name {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+    letter-spacing: 0.02em;
+  }
+
+  .topic-desc {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+    margin-bottom: 10px;
+  }
+
+  .topic-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .where-used {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    padding: 2px 7px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    border: 1px solid;
+    opacity: 0.8;
+  }
+
+  .depth-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* Detail panel */
+  .detail-panel {
+    position: fixed;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 420px;
+    background: #0d1120;
+    border-left: 1px solid var(--border);
+    z-index: 100;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow-y: auto;
+    padding: 32px;
+  }
+  .detail-panel.open { transform: translateX(0); }
+
+  .detail-close {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    background: none;
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    cursor: pointer;
+    border-radius: 4px;
+    margin-bottom: 24px;
+    display: block;
+    transition: all 0.2s;
+    letter-spacing: 0.1em;
+  }
+  .detail-close:hover { color: var(--text); border-color: var(--accent); }
+
+  .detail-tag {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  .detail-title {
+    font-family: var(--mono);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 16px;
+    line-height: 1.3;
+  }
+
+  .detail-desc {
+    font-size: 14px;
+    color: #94a3b8;
+    line-height: 1.7;
+    margin-bottom: 24px;
+  }
+
+  .detail-section {
+    margin-bottom: 24px;
+  }
+
+  .detail-section-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .detail-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .detail-list li {
+    font-size: 13px;
+    color: #94a3b8;
+    padding-left: 14px;
+    position: relative;
+    line-height: 1.5;
+  }
+
+  .detail-list li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+
+  .code-snippet {
+    background: #0a0d14;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 12px 16px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: #7dd3fc;
+    line-height: 1.6;
+    overflow-x: auto;
+    margin-top: 8px;
+  }
+
+  .ref-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #94a3b8;
+    margin-bottom: 6px;
+    line-height: 1.5;
+  }
+  .ref-item strong {
+    color: var(--accent3);
+    font-family: var(--mono);
+    font-size: 11px;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  /* Stats bar */
+  .stats-bar {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    gap: 0;
+    padding: 0 60px;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .stat {
+    padding: 14px 24px;
+    border-right: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .stat-num {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .stat-label {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+    font-family: var(--mono);
+    letter-spacing: 0.05em;
+  }
+
+  /* Overlay */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 90;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .overlay.active { opacity: 1; pointer-events: all; }
+
+  /* Search */
+  .search-wrap {
+    padding: 16px 60px;
+    position: relative;
+    z-index: 10;
+    border-bottom: 1px solid var(--border);
+  }
+  .search-input {
+    width: 100%;
+    max-width: 400px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 9px 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+    letter-spacing: 0.05em;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .search-input::placeholder { color: var(--muted); }
+
+  /* Expand all btn */
+  .controls {
+    display: flex;
+    gap: 8px;
+    padding: 12px 60px;
+    position: relative;
+    z-index: 10;
+    border-bottom: 1px solid var(--border);
+  }
+  .ctrl-btn {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.2s;
+  }
+  .ctrl-btn:hover { color: var(--text); border-color: var(--accent); }
+
+  @media (max-width: 768px) {
+    header, .phase-nav, .stats-bar, .search-wrap, .controls, .main {
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+    .detail-panel { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<header>
+  <div class="logo">MERIDIAN-SPEC</div>
+  <h1>Knowledge Map — RV32I CPU Project</h1>
+  <p>12 Weeks · 37 Instructions · Complete RTL</p>
+</header>
+
+<div class="stats-bar">
+  <div class="stat"><div class="stat-num">6</div><div class="stat-label">Knowledge Domains</div></div>
+  <div class="stat"><div class="stat-num" id="topic-count">32</div><div class="stat-label">Core Topics</div></div>
+  <div class="stat"><div class="stat-num">5</div><div class="stat-label">Project Phases</div></div>
+  <div class="stat"><div class="stat-num">37</div><div class="stat-label">Instructions to Implement</div></div>
+  <div class="stat"><div class="stat-num">3</div><div class="stat-label">Pipeline Stages</div></div>
+</div>
+
+<div class="phase-nav">
+  <button class="phase-btn active" data-phase="all">All Topics</button>
+  <button class="phase-btn" data-phase="prereq">Prereqs</button>
+  <button class="phase-btn" data-phase="lib">Phase: Modules</button>
+  <button class="phase-btn" data-phase="sc">Phase: Single-Cycle</button>
+  <button class="phase-btn" data-phase="pipe">Phase: Pipeline</button>
+  <button class="phase-btn" data-phase="pf">Phase: Portfolio</button>
+</div>
+
+<div class="search-wrap">
+  <input class="search-input" type="text" placeholder="Search topics..." id="searchInput">
+</div>
+
+<div class="controls">
+  <button class="ctrl-btn" onclick="expandAll()">Expand All</button>
+  <button class="ctrl-btn" onclick="collapseAll()">Collapse All</button>
+</div>
+
+<main class="main" id="mainContent"></main>
+
+<div class="overlay" id="overlay" onclick="closePanel()"></div>
+<div class="detail-panel" id="detailPanel">
+  <button class="detail-close" onclick="closePanel()">← Close</button>
+  <div id="detailContent"></div>
+</div>
+
+<script>
+const PHASE_COLORS = {
+  prereq: '#6366f1',
+  lib:    '#10b981',
+  sc:     '#f59e0b',
+  pipe:   '#7c3aed',
+  pf:     '#ef4444',
+};
+
+const DOMAINS = [
+  {
+    id: 'digital',
+    icon: '⚡',
+    color: '#4f8fff',
+    title: 'Digital Logic & Hardware Foundations',
+    difficulty: 'Prerequisite',
+    diffColor: '#6366f1',
+    phases: ['prereq', 'lib'],
+    topics: [
+      {
+        name: 'Boolean Algebra & Logic Gates',
+        short: 'AND, OR, NOT, XOR, NAND, NOR. De Morgan\'s laws. The mathematical foundation of all digital hardware.',
+        desc: 'Every signal in the MERIDIAN datapath ultimately reduces to combinations of logic gates. The ALU\'s AND/OR/XOR operations are direct hardware implementations of Boolean operators. De Morgan\'s theorem is used constantly when analyzing inverted control signals (active-low reset, write enables).',
+        used: ['prereq', 'lib'],
+        depth: 'Foundation',
+        mustKnow: ['Truth tables for all basic gates', 'De Morgan\'s law: ~(A·B) = ~A+~B', 'NAND/NOR as universal gates', 'XOR as inequality detector (used in alu_zero flag)'],
+        inProject: ['ALU bitwise operations (AND, OR, XOR, XORI)', 'Branch flag logic (alu_zero, alu_neg)', 'Control unit boolean expressions', 'Mux implementation'],
+        code: '// XOR gate in SV\nassign alu_zero = ~|alu_result; // NOR-reduction\nassign alu_neg  =  alu_result[31];',
+        ref: [{ title: 'Harris & Harris Ch. 1–2', note: 'Complete gate-level digital logic foundation.' }]
+      },
+      {
+        name: 'Combinational vs Sequential Circuits',
+        short: 'Combinational: output depends only on current inputs. Sequential: output depends on inputs AND stored state.',
+        desc: 'MERIDIAN\'s entire datapath is a combination of these two types. The ALU, immediate generator, control unit, and all muxes are combinational — their outputs are valid as soon as inputs settle. The program counter, register file, and pipeline registers are sequential — they capture state on the clock edge.',
+        used: ['prereq', 'lib', 'sc'],
+        depth: 'Foundation',
+        mustKnow: ['Propagation delay and why it determines max clock frequency', 'Setup and hold time constraints', 'always_comb vs always_ff in SystemVerilog', 'Latch vs flip-flop difference (latches are a design bug unless intentional)'],
+        inProject: ['ALU is combinational (always_comb)', 'pc_reg is sequential (always_ff)', 'imem is combinational ROM', 'dmem write is sequential, read is combinational'],
+        code: '// Sequential: PC register\nalways_ff @(posedge clk or negedge rst_n)\n  if (!rst_n) pc <= 32\'h0;\n  else        pc <= pc_next;\n\n// Combinational: ALU\nalways_comb begin\n  case (alu_ctrl)\n    ADD: alu_result = op_a + op_b;\n  endcase\nend',
+        ref: [{ title: 'Harris & Harris Ch. 3', note: 'Sequential logic, flip-flops, timing analysis.' }]
+      },
+      {
+        name: 'Adders and Arithmetic Circuits',
+        short: 'Half adder, full adder, ripple-carry adder, carry-lookahead adder. Two\'s complement subtraction.',
+        desc: 'The ALU\'s ADD operation is the most-used operation in RISC-V — loads, stores, branches, AUIPC, JAL, JALR, and ADDI all compute an addition. Understanding how adders work at the gate level explains the carry-out flag used for BLTU/BGEU, and why subtraction is just addition of the negated operand (A - B = A + (~B) + 1).',
+        used: ['prereq', 'lib'],
+        depth: 'Foundation',
+        mustKnow: ['Two\'s complement representation and range (-2^31 to 2^31-1)', 'Subtraction via ~B+1 (inverter + carry-in=1)', 'Overflow conditions for signed arithmetic', 'Why carry-out ≠ overflow for signed numbers'],
+        inProject: ['ALU ADD/SUB operations', 'Branch condition flags (carry, overflow, negative)', 'SLTU uses unsigned carry; SLT uses signed overflow'],
+        code: '// Subtraction using 2\'s complement\n// A - B = A + (~B) + 1\nassign {carry_out, result} = \n  op_a + (~op_b) + 32\'b1; // when SUB\nassign overflow = \n  (op_a[31]==op_b[31]) && \n  (result[31]!=op_a[31]);',
+        ref: [{ title: 'Harris & Harris Ch. 5.2', note: 'Adder circuits through carry-lookahead.' }]
+      },
+      {
+        name: 'Multiplexers (Muxes)',
+        short: 'N-to-1 data selector controlled by a select signal. The workhorse of datapath routing.',
+        desc: 'MERIDIAN has at least 5 explicit muxes in the datapath: ALU operand A select, ALU operand B select, PC next select (3-way), and writeback select (3-way). Every time a signal needs to choose between sources based on the instruction type, a mux is the implementation. Understanding mux timing is critical for the critical path.',
+        used: ['prereq', 'lib', 'sc'],
+        depth: 'Foundation',
+        mustKnow: ['2:1 and 4:1 mux implementation', 'Ternary operator in SV as 2:1 mux', 'Case statement for wider muxes', 'Mux on critical path adds propagation delay'],
+        inProject: ['alu_src_a_sel: rs1 vs PC', 'alu_src_b_sel: rs2 vs imm_ext', 'pc_sel [1:0]: PC+4 vs branch vs jump', 'wb_sel [1:0]: ALU vs dmem vs PC+4'],
+        code: '// 3-way PC mux\nassign pc_next = \n  (pc_sel == 2\'b10) ? pc_jump   :\n  (pc_sel == 2\'b01) ? pc_branch :\n                      pc_plus4;',
+        ref: [{ title: 'Harris & Harris Ch. 2.4', note: 'Mux implementation and the concept of don\'t-cares.' }]
+      },
+      {
+        name: 'Registers and Flip-Flops',
+        short: 'D flip-flop: captures input on clock edge, holds it until next edge. Register = array of flip-flops.',
+        desc: 'The register file is 32 × 32-bit D flip-flops (1024 flip-flops total). The PC register is one 32-bit register. Pipeline registers in Phase 3 will be wide bundles of flip-flops capturing the entire instruction context at each stage boundary. Understanding setup/hold time is essential for knowing why the pipeline clock period must be long enough.',
+        used: ['prereq', 'lib', 'sc', 'pipe'],
+        depth: 'Foundation',
+        mustKnow: ['D flip-flop operation (capture on posedge)', 'Reset behavior (synchronous vs asynchronous)', 'Register enable (only capture when en=1)', 'Why registers define stage boundaries in a pipeline'],
+        inProject: ['regfile: 32 × 32 flip-flop array', 'pc_reg: one 32-bit register with reset', 'Pipeline registers: IF/ID, ID/EX bundles', 'dmem write: synchronous (registered on clock)'],
+        code: '// Register with enable\nalways_ff @(posedge clk)\n  if (wr_en && addr != 0)\n    regs[addr] <= wr_data;',
+        ref: [{ title: 'Harris & Harris Ch. 3.2', note: 'D flip-flop through register arrays.' }]
+      },
+      {
+        name: 'Number Systems & Representation',
+        short: 'Binary, hexadecimal, two\'s complement. Sign extension. Unsigned vs signed interpretation.',
+        desc: 'RISC-V carefully distinguishes signed and unsigned operations. LW vs LBU vs LB, SLT vs SLTU, BLT vs BLTU all differ only in signed vs unsigned interpretation of the same 32 bits. Understanding that the hardware stores bits and the instruction gives them meaning is fundamental.',
+        used: ['prereq', 'lib', 'sc'],
+        depth: 'Foundation',
+        mustKnow: ['Convert hex ↔ binary ↔ decimal in your head for small values', 'Two\'s complement negation: flip all bits, add 1', 'Sign extension: replicate MSB leftward', 'Zero extension: fill with 0s (for LBU, LHU)'],
+        inProject: ['imm_gen sign extension for all 5 formats', 'dmem sign_ext signal for loads', 'Branch condition signed vs unsigned'],
+        code: '// Sign extension (I-type)\nassign imm_ext = {{20{instr[31]}}, instr[31:20]};\n// Zero extension (LBU)\nassign load_result = {24\'b0, dmem_byte};',
+        ref: [{ title: 'P&H Appendix A', note: 'Number representation chapter — also explains IEEE 754 for context.' }]
+      },
+    ]
+  },
+  {
+    id: 'sv',
+    icon: '💻',
+    color: '#10b981',
+    title: 'SystemVerilog RTL Design',
+    difficulty: 'Core Skill',
+    diffColor: '#10b981',
+    phases: ['lib', 'sc', 'pipe'],
+    topics: [
+      {
+        name: 'SystemVerilog Module Structure',
+        short: 'module/endmodule, port declarations, parameter, localparam. The fundamental unit of RTL design.',
+        desc: 'Every MERIDIAN component is a SystemVerilog module. Knowing the exact syntax for port declarations (logic vs wire vs reg, input/output/inout), parameters for configurability (like MEM_DEPTH), and the difference between module instantiation and functional description is table-stakes for writing any RTL.',
+        used: ['lib', 'sc', 'pipe'],
+        depth: 'Core',
+        mustKnow: ['module/endmodule, port list syntax', 'logic type vs wire vs reg (in SV, use logic always)', 'parameter vs localparam', 'Named port connections: .port_name(signal)', 'Implicit port connections: .* for matching names'],
+        inProject: ['All 7 leaf modules (alu, regfile, imm_gen, etc.)', 'meridian_core top-level instantiation', 'tb_core testbench module'],
+        code: 'module alu #(parameter WIDTH = 32) (\n  input  logic [WIDTH-1:0] op_a, op_b,\n  input  logic [3:0]       alu_ctrl,\n  output logic [WIDTH-1:0] result,\n  output logic             zero, neg, carry\n);',
+        ref: [{ title: 'IEEE Std 1800-2017 (SystemVerilog LRM)', note: 'Free download from IEEE — Chapters 3–6 for module basics.' }, { title: 'Sutherland, Davidmann — SystemVerilog for Design', note: 'The practical SV RTL reference.' }]
+      },
+      {
+        name: 'Procedural Blocks: always_comb & always_ff',
+        short: 'always_comb for combinational logic. always_ff @(posedge clk) for sequential. Never mix.',
+        desc: 'This is the most common source of RTL bugs for beginners: using the wrong always block type, creating unintended latches (always without full case coverage in always_comb), or mixing clocked and combinational logic. MERIDIAN uses always_comb for ALU, control unit, imm_gen, muxes — and always_ff for PC, regfile, pipeline registers.',
+        used: ['lib', 'sc', 'pipe'],
+        depth: 'Core',
+        mustKnow: ['always_comb: automatic sensitivity list, synthesizes to gates', 'always_ff: must have clock and optionally reset in sensitivity list', 'Latch inference: happens when always_comb doesn\'t assign output in all branches', 'always_ff outputs hold their value (memory) — always_comb do not'],
+        inProject: ['ALU: always_comb with case(alu_ctrl)', 'control.sv: always_comb with case(opcode)', 'pc_reg: always_ff @(posedge clk, negedge rst_n)', 'regfile: always_ff for write, always_comb or assign for read'],
+        code: '// Latch bug — DON\'T do this:\nalways_comb\n  if (sel) y = a; // y is latched when sel=0!\n\n// Correct — assign default first:\nalways_comb begin\n  y = b; // default\n  if (sel) y = a;\nend',
+        ref: [{ title: 'Sutherland — RTL Modeling with SystemVerilog', note: 'Chapter 4 on always_comb/always_ff best practices.' }]
+      },
+      {
+        name: 'Continuous Assignments & Operators',
+        short: 'assign statements for combinational wiring. Bit-select, part-select, concatenation, replication.',
+        desc: 'Most of the wiring in meridian_core is done with assign statements. The instruction field extraction (assign opcode = instr[6:0]) and immediate reconstruction (assign imm_b = {instr[31], instr[7], instr[30:25], instr[11:8], 1\'b0}) are all continuous assignments using bit manipulation operators.',
+        used: ['lib', 'sc'],
+        depth: 'Core',
+        mustKnow: ['assign syntax and combinational semantics', 'Bit-select: signal[N] and part-select: signal[N:M]', 'Concatenation: {a, b, c}', 'Replication: {N{bit}} for sign extension', 'Reduction operators: |alu_result (OR all bits)'],
+        inProject: ['Instruction field extraction (opcode, rs1, rs2, rd, funct3, funct7_b5)', 'Immediate reconstruction in imm_gen', 'alu_zero = ~|alu_result', 'pc_plus4 = pc + 32\'d4'],
+        code: '// Immediate reconstruction examples\n// I-type:\nassign imm_i = {{20{instr[31]}}, instr[31:20]};\n// B-type:\nassign imm_b = {{19{instr[31]}},\n               instr[31], instr[7],\n               instr[30:25], instr[11:8],\n               1\'b0};',
+        ref: [{ title: 'Harris & Harris App. B — SystemVerilog', note: 'Concise SV reference appendix.' }]
+      },
+      {
+        name: 'Case Statements & Priority Logic',
+        short: 'case, casez, unique case. For control units, ALU decoders, and muxes. Understanding priority inference.',
+        desc: 'The control unit and ALU decoder are both implemented as case statements — one case for each opcode/funct combination. The unique case directive tells the synthesizer all cases are mutually exclusive (no priority encoder needed), producing smaller, faster hardware. Missing case coverage creates X-propagation in simulation.',
+        used: ['lib', 'sc'],
+        depth: 'Core',
+        mustKnow: ['case vs casez (z matches \'?\') vs casex (x matches \'?\')', 'unique case: one-hot, enables optimization', 'default clause prevents latch inference', 'X and Z values in simulation'],
+        inProject: ['control.sv: case(opcode) with default', 'alu.sv: case(alu_ctrl)', 'imm_gen.sv: case(imm_fmt_sel)', 'ALU decoder: case({alu_op, funct3, funct7_b5})'],
+        code: '// Control unit skeleton\nalways_comb begin\n  // Defaults prevent latches\n  {rf_wr_en, mem_wr, mem_rd, branch,\n   jump, alu_src_b} = \'0;\n  wb_sel = 2\'b00;\n  unique case (opcode)\n    7\'b0110011: rf_wr_en = 1; // R-type\n    7\'b0000011: begin         // Loads\n      rf_wr_en = 1;\n      mem_rd = 1;\n      wb_sel = 2\'b01;\n    end\n    default: ; // NOP / safe state\n  endcase\nend',
+        ref: [{ title: 'Cumming, "SystemVerilog\'s priority and unique"', note: 'SNUG paper — search "Cummings unique case SNUG". Essential reading.' }]
+      },
+      {
+        name: 'Parameterization & Packages',
+        short: 'parameter, localparam, typedef, package. Writing reusable, configurable RTL.',
+        desc: 'While MERIDIAN v1.0 targets RV32I specifically, writing parameterized modules (ALU width, memory depth, register count) is an industry expectation. Packages allow you to define opcodes, funct3 values, and ALU control encodings once and import them across all modules — eliminating magic numbers from RTL.',
+        used: ['lib', 'sc', 'pipe'],
+        depth: 'Good Practice',
+        mustKnow: ['parameter in module header for external configuration', 'localparam for internal constants', 'package for shared type definitions and constants', 'import pkg::* to bring package contents into scope'],
+        inProject: ['ALU: WIDTH parameter (currently 32)', 'Memory: DEPTH parameter', 'riscv_pkg.sv: opcode, funct3, alu_ctrl constants', 'typedef for control signal bundling'],
+        code: '// riscv_pkg.sv\npackage riscv_pkg;\n  // Opcodes\n  localparam OP_RTYPE = 7\'b0110011;\n  localparam OP_ITYPE = 7\'b0010011;\n  localparam OP_LOAD  = 7\'b0000011;\n  // ALU ops\n  localparam ALU_ADD = 4\'b0000;\n  localparam ALU_SUB = 4\'b0001;\nendpackage',
+        ref: [{ title: 'Sutherland — IEEE 1800-2017 Packages', note: 'SV packages for RTL design — search "SystemVerilog packages RTL best practices".' }]
+      },
+      {
+        name: 'Testbench Writing & Simulation',
+        short: 'Non-synthesizable SV: initial blocks, $display, $readmemh, $dumpfile, clocking, assertions.',
+        desc: 'Every module in MERIDIAN has a corresponding testbench. Testbenches use initial blocks (not synthesizable) to drive inputs, $display to print pass/fail, $readmemh to load instruction hex files into memory, and $dumpfile/$dumpvars to generate VCD waveform files for GTKWave. This is a completely different coding style from synthesizable RTL.',
+        used: ['lib', 'sc', 'pipe', 'pf'],
+        depth: 'Core',
+        mustKnow: ['initial vs always in testbenches', '$display, $monitor, $strobe for debug printing', '$readmemh for loading hex test programs', '$dumpfile/$dumpvars for VCD generation', 'Generating a clock with always #5 clk = ~clk'],
+        inProject: ['tb_alu.sv, tb_regfile.sv, tb_decoder.sv (unit)', 'tb_core.sv (integration) with $readmemh for assembly tests', 'sim/run.sh script executing all testbenches via iverilog'],
+        code: '// Testbench skeleton\nmodule tb_alu;\n  logic [31:0] op_a, op_b, result;\n  logic [3:0]  ctrl;\n\n  alu dut (.op_a, .op_b,\n           .alu_ctrl(ctrl), .result);\n\n  initial begin\n    $dumpfile("tb_alu.vcd");\n    $dumpvars(0, tb_alu);\n    // Test ADD\n    op_a=32\'d10; op_b=32\'d5; ctrl=4\'b0000;\n    #10;\n    assert(result==32\'d15)\n      else $fatal("ADD failed");\n    $display("PASS: ADD");\n    $finish;\n  end\nendmodule',
+        ref: [{ title: 'Spear & Tumbush — SystemVerilog for Verification', note: 'Chapters 1–3 for testbench structure. The verification bible.' }]
+      },
+    ]
+  },
+  {
+    id: 'isa',
+    icon: '📐',
+    color: '#f59e0b',
+    title: 'RISC-V ISA & Instruction Encoding',
+    difficulty: 'Project-Specific',
+    diffColor: '#f59e0b',
+    phases: ['prereq', 'lib', 'sc'],
+    topics: [
+      {
+        name: 'RV32I Instruction Formats (R/I/S/B/U/J)',
+        short: 'The 6 fixed-width 32-bit formats that encode all RISC-V instructions. Field positions and bit extraction.',
+        desc: 'This is the single most important topic for MERIDIAN-LIB and MERIDIAN-SC. Every module\'s design — the decoder, the immediate generator, the control unit — derives directly from understanding these formats. The regularity of rs1 at [19:15] and rs2 at [24:20] across all formats is what allows the register file ports to be wired directly without knowing the instruction type first.',
+        used: ['prereq', 'lib', 'sc'],
+        depth: 'Deep',
+        mustKnow: ['Bit positions of every field in all 6 formats', 'Why B and J immediates are scrambled (sign bit + hardware reuse)', 'Shift instructions as a special case of I-type', 'The opcode-funct3-funct7_b5 decode hierarchy'],
+        inProject: ['imm_gen.sv: reconstructs immediate from scrambled bits', 'control.sv: case on opcode', 'decoder field extractions: opcode, rd, rs1, rs2, funct3, funct7_b5'],
+        code: '// All 5 immediates in one place\n// I: {{20{i[31]}}, i[31:20]}\n// S: {{20{i[31]}}, i[31:25], i[11:7]}\n// B: {{19{i[31]}}, i[31], i[7],\n//     i[30:25], i[11:8], 1\'b0}\n// U: {i[31:12], 12\'b0}\n// J: {{11{i[31]}}, i[31], i[19:12],\n//     i[20], i[30:21], 1\'b0}',
+        ref: [{ title: 'RISC-V ISA Spec, Chapter 2.2–2.6', note: 'Primary source. Read every word of these sections.' }]
+      },
+      {
+        name: 'Integer Instruction Set: All 37',
+        short: 'ADD/SUB, logical, shifts, compare, loads, stores, branches, jumps, LUI, AUIPC.',
+        desc: 'You need to be able to describe what every one of the 37 instructions does, what format it uses, which datapath resources it needs, and what its control signals are — from memory, in an interview, while looking at a waveform. This isn\'t memorization; it\'s pattern recognition across the instruction groups.',
+        used: ['sc', 'pipe'],
+        depth: 'Deep',
+        mustKnow: ['R-type: ADD SUB AND OR XOR SLL SRL SRA SLT SLTU (10 instr)', 'I-type ALU: ADDI ANDI ORI XORI SLTI SLTIU SLLI SRLI SRAI (9 instr)', 'Load: LW LH LB LHU LBU (5 instr)', 'Store: SW SH SB (3 instr)', 'Branch: BEQ BNE BLT BGE BLTU BGEU (6 instr)', 'Jump: JAL JALR (2 instr)', 'Upper: LUI AUIPC (2 instr)'],
+        inProject: ['Full control truth table in control.sv', 'Assembly test programs for each instruction group', 'tb_core.sv test vectors for all 37'],
+        code: '// LUI: rd = imm << 12\n// AUIPC: rd = PC + (imm << 12)\n// JAL: rd = PC+4; PC = PC + sext(J-imm)\n// JALR: rd = PC+4; PC = (rs1+imm)&~1\n// The 4 most architecturally\n// interesting — understand these cold.',
+        ref: [{ title: 'RISC-V ISA Spec, Chapter 2', note: 'The complete chapter, not just the summary table.' }, { title: 'P&H Ch. 2', note: 'RISC-V instruction set tour from the CPU designer\'s perspective.' }]
+      },
+      {
+        name: 'Assembler & Assembly Language',
+        short: 'Writing and reading RISC-V assembly. Pseudo-instructions. $readmemh hex format for imem.',
+        desc: 'Your testbenches for MERIDIAN-SC will use actual RISC-V assembly programs compiled to hex. You need to write simple test programs in assembly and understand how the assembler converts them to machine code hex. The sim/run.sh script will load these hex files into imem via $readmemh.',
+        used: ['sc', 'pipe', 'pf'],
+        depth: 'Practical',
+        mustKnow: ['Basic RISC-V assembly syntax: mnemonic rd, rs1, rs2', 'Pseudo-instructions: li (→ lui+addi), mv (→ addi rd,rs,0)', 'Labels and PC-relative addressing', '$readmemh format: hex words one per line', 'RISC-V calling convention (a0–a7 for arguments, ra for return address)'],
+        inProject: ['tests/add_test.hex, branch_test.hex, load_store_test.hex', 'tb_core.sv $readmemh("test.hex", imem_array)', 'Compiling with riscv-gnu-toolchain or hand-encoding'],
+        code: '# Simple test: fibonacci\n# x1 = 0, x2 = 1, x3 = n\naddi x1, x0, 0    # a = 0\naddi x2, x0, 1    # b = 1\naddi x3, x0, 8    # count = 8\nloop:\n  add  x4, x1, x2 # tmp = a+b\n  addi x1, x2, 0  # a = b\n  addi x2, x4, 0  # b = tmp\n  addi x3, x3, -1 # count--\n  bne  x3, x0, loop',
+        ref: [{ title: 'RISC-V Assembly Programmer\'s Manual (github.com/riscv/riscv-asm-manual)', note: 'Official RISC-V assembly reference. Free on GitHub.' }]
+      },
+      {
+        name: 'Memory Model & Addressing',
+        short: 'Byte-addressable memory. Word alignment. Load/store byte enables. Big vs little endian.',
+        desc: 'RISC-V uses byte-addressable memory — each unique address refers to one byte. A 32-bit word occupies 4 consecutive byte addresses. LW loads all 4 bytes at once; LB loads just one. RISC-V is little-endian by default (lowest byte at lowest address). Your dmem module must implement byte, halfword, and word access correctly.',
+        used: ['sc', 'lib'],
+        depth: 'Practical',
+        mustKnow: ['Byte vs halfword vs word access and alignment requirements', 'Little-endian byte ordering in RISC-V', 'How $readmemh loads words into your memory array', 'Address calculation: base register + sign-extended offset (always via ALU with ADD)'],
+        inProject: ['dmem_byte_sel[1:0] controls transfer width', 'dmem_sign_ext controls sign vs zero extension on loads', 'imem: word-addressed internally but byte-addressed by spec'],
+        code: '// Memory array and byte-enable logic\nlogic [7:0] mem [0:MEM_DEPTH-1];\n// LW: read 4 bytes\nassign rd_word = {mem[addr+3], mem[addr+2],\n                  mem[addr+1], mem[addr+0]};\n// LBU: read 1 byte, zero-extend\nassign rd_byte = {24\'b0, mem[addr]};',
+        ref: [{ title: 'RISC-V ISA Spec, Section 2.6', note: 'Load/store instructions and alignment.' }]
+      },
+    ]
+  },
+  {
+    id: 'microarch',
+    icon: '🔧',
+    color: '#7c3aed',
+    title: 'Microarchitecture & Datapath Design',
+    difficulty: 'Core Skill',
+    diffColor: '#7c3aed',
+    phases: ['sc', 'pipe'],
+    topics: [
+      {
+        name: 'Single-Cycle Datapath Design',
+        short: 'One instruction completes per clock cycle. Clock period = worst-case instruction latency.',
+        desc: 'The single-cycle implementation is the first major milestone (v0.2, v0.3). Every instruction flows from fetch to writeback in one clock edge. The clock period must be long enough for the slowest instruction — typically a load (fetch → decode → ALU → dmem → regfile write). This sets the baseline performance before pipelining.',
+        used: ['sc'],
+        depth: 'Deep',
+        mustKnow: ['The 5 stages: IF, ID, EX, MEM, WB (even though they\'re combinational in single-cycle)', 'Critical path = longest combinational path through the design', 'Control unit generates all signals combinationally from opcode/funct', 'Single-cycle is correct-by-construction: no hazards possible'],
+        inProject: ['meridian_core.sv ties all modules together', 'Clock period must exceed: IF+ID+EX+MEM+WB delay for LW', 'tb_core.sv tests all 37 instructions before v0.3 tag'],
+        code: '// Datapath connections in meridian_core\n// IF\npc_reg    u_pc  (.clk, .rst_n, .pc_next, .pc);\nimem      u_mem (.addr(pc), .data(instr));\n// ID/Control\ncontrol   u_ctl (.opcode, .funct3,\n                 .funct7_b5, .*);\nimm_gen   u_imm (.instr, .fmt(imm_fmt),\n                 .imm_ext);\n// EX\nalu       u_alu (.op_a, .op_b,\n                 .ctrl(alu_ctrl), .result);',
+        ref: [{ title: 'P&H Ch. 4.1–4.4', note: 'Single-cycle RISC-V datapath construction step by step.' }]
+      },
+      {
+        name: 'Control Unit Design',
+        short: 'Combinational truth table mapping opcode/funct3/funct7_b5 to all control signals.',
+        desc: 'The control unit is the brain of the CPU. It\'s a pure combinational circuit: input is the instruction encoding, output is every mux select, enable, and select signal in the datapath. The two-level decode structure (main control → ALU decoder) is cleaner than a flat decoder and is the standard textbook approach.',
+        used: ['sc', 'pipe'],
+        depth: 'Deep',
+        mustKnow: ['One-hot opcode decode vs binary opcode decode', 'Two-level ALU decode: alu_op[1:0] → alu_ctrl[3:0]', 'Don\'t-care optimization with casez or synthesis tools', 'Every control signal must have a safe default value'],
+        inProject: ['control.sv: case(opcode), 14 output signals', 'alu_decoder.sv: case({alu_op, funct3, funct7_b5})', 'All 37 instructions mapped in the truth table'],
+        code: '// Two-level decode\n// Level 1: opcode → alu_op[1:0]\n// 00 = always ADD (load/store)\n// 01 = always SUB (branch)\n// 10 = use funct (R-type, ALU-imm)\n// Level 2: {alu_op, funct3, funct7_b5}\n//          → alu_ctrl[3:0]',
+        ref: [{ title: 'P&H Figure 4.18', note: 'Two-level decode truth table for RISC-V control. The definitive reference for this module.' }]
+      },
+      {
+        name: '3-Stage Pipeline (IF/ID/EX)',
+        short: 'Three instructions in-flight simultaneously, separated by pipeline registers. 3× throughput potential.',
+        desc: 'Phase 3 of MERIDIAN adds pipeline registers between IF/ID and ID/EX, allowing a new instruction to start fetching every cycle. This is where the project becomes significantly more complex — the correct single-cycle result is now endangered by hazards. The pipeline is only valuable if hazards are correctly handled.',
+        used: ['pipe'],
+        depth: 'Deep',
+        mustKnow: ['Pipeline register contents: carry all signals needed by later stages', 'Structural, data, and control hazard classification', 'Why a 3-stage pipeline has simpler hazards than a 5-stage one', 'Throughput vs latency: pipeline improves throughput, not single-instruction latency'],
+        inProject: ['if_id_reg, id_ex_reg flip-flop bundles', 'Forward unit: detects and resolves data hazards', 'Hazard unit: detects load-use, inserts stall'],
+        code: '// IF/ID pipeline register\nalways_ff @(posedge clk)\n  if (flush) begin\n    if_id_instr <= 32\'h0; // NOP\n    if_id_pc    <= 32\'h0;\n  end else if (!stall) begin\n    if_id_instr <= imem_rd_data;\n    if_id_pc    <= pc;\n  end',
+        ref: [{ title: 'P&H Ch. 4.5–4.8', note: 'Pipeline introduction through hazard handling.' }]
+      },
+      {
+        name: 'Data Hazards & Forwarding',
+        short: 'RAW hazard: instruction reads register written by a recent instruction. Solved with operand forwarding.',
+        desc: 'The most common hazard in a pipeline. When ADD x1, x2, x3 is followed by SUB x4, x1, x5 — the SUB needs x1 but the ADD hasn\'t written it yet (it\'s in EX, not in the register file). Forwarding detects this and routes the EX-stage result directly to the ALU input, bypassing the register file entirely.',
+        used: ['pipe'],
+        depth: 'Deep',
+        mustKnow: ['RAW (Read After Write): the only hazard that matters in in-order pipelines', 'Forwarding paths: EX/MEM → EX (1-cycle old), MEM/WB → EX (2-cycle old)', 'Load-use hazard: forwarding can\'t help, must stall 1 cycle', 'Forward unit logic: compare rd of older instructions with rs1/rs2 of current'],
+        inProject: ['forward_unit.sv: forward_a_sel[1:0], forward_b_sel[1:0]', 'hazard_unit.sv: stall detection for load-use', 'ALU operand muxes extended to 4-way for forwarding'],
+        code: '// Forward unit logic\n// EX hazard (1 cycle old)\nif (ex_rd != 0 && ex_rf_wr &&\n    ex_rd == id_rs1)\n  forward_a = 2\'b10; // from EX result\n// MEM hazard (2 cycles old)\nelse if (mem_rd != 0 && mem_rf_wr &&\n         mem_rd == id_rs1)\n  forward_a = 2\'b01; // from MEM result',
+        ref: [{ title: 'P&H Figure 4.53–4.56', note: 'Forwarding unit logic diagrams — implement these directly.' }]
+      },
+      {
+        name: 'Control Hazards & Branch Handling',
+        short: 'Branch outcome unknown until EX stage. Instructions fetched after branch may need to be flushed.',
+        desc: 'When a branch is in the pipeline, the CPU has already fetched 1-2 instructions that come after it in memory — but the branch might redirect execution elsewhere. In a 3-stage pipeline, the branch target isn\'t known until the EX stage, meaning 1 instruction in IF may be wrong and needs to be flushed (replaced with NOP). Static not-taken prediction is the simplest correct approach.',
+        used: ['pipe'],
+        depth: 'Deep',
+        mustKnow: ['Static not-taken: always fetch PC+4, flush if branch taken', 'Flush = replace IF/ID register contents with NOP (0x00000013 = ADDI x0,x0,0)', 'Branch penalty: 1 cycle with static not-taken in 3-stage', 'Dynamic prediction (BTB, BHT) is a Phase 4 extension only'],
+        inProject: ['flush signal drives IF/ID register to NOP', 'pc_sel determined in EX, causes 1-cycle penalty', 'Branch test programs must check flush correctness'],
+        code: '// Branch flush: turn IF/ID into NOP\n// 0x00000013 = ADDI x0, x0, 0\nalways_ff @(posedge clk)\n  if (flush)\n    if_id_instr <= 32\'h0000_0013;\n  else if (!stall)\n    if_id_instr <= imem_rd_data;',
+        ref: [{ title: 'P&H Ch. 4.8 — Control Hazards', note: 'Static prediction, dynamic prediction, and branch delay slots.' }]
+      },
+    ]
+  },
+  {
+    id: 'verification',
+    icon: '✅',
+    color: '#ef4444',
+    title: 'Verification & Testing',
+    difficulty: 'Essential',
+    diffColor: '#ef4444',
+    phases: ['lib', 'sc', 'pipe', 'pf'],
+    topics: [
+      {
+        name: 'Directed Testing & Test Planning',
+        short: 'Writing specific test cases that target specific behaviors. Coverage-driven test planning.',
+        desc: 'Random testing is insufficient for CPU verification — a random instruction stream is unlikely to hit corner cases like x0 write suppression, sign extension of negative immediates, or back-to-back loads with forwarding. MERIDIAN uses directed tests: one test program per instruction type, then corner cases, then integration.',
+        used: ['lib', 'sc', 'pipe'],
+        depth: 'Core',
+        mustKnow: ['One testbench per module in MERIDIAN-LIB', 'Test each instruction with at least: positive values, negative values, zero, boundary values', 'Corner cases: x0 as destination, maximum immediate values, branch not-taken and taken', 'Pass/fail reporting: $display with PASS/FAIL, exit code via $finish'],
+        inProject: ['tb_alu: all 11 alu_ctrl encodings, with zero/negative/boundary values', 'tb_core: one test per instruction, then multi-instruction sequences', 'sim/run.sh: automated regression across all testbenches'],
+        code: '// Systematic ALU test coverage\n// ADD: positive+positive, neg+pos, overflow\n// SUB: pos-pos, pos-neg, zero result\n// SLT: rs1<rs2(signed), rs1>rs2, equal\n// SLTU: same but unsigned\n// Shifts: by 0, by 1, by 31',
+        ref: [{ title: 'Spear & Tumbush Ch. 2', note: 'Directed testing methodology for hardware.' }]
+      },
+      {
+        name: 'Waveform Debugging with GTKWave',
+        short: 'Loading .vcd files, adding signal groups, tracing a failing instruction through the datapath.',
+        desc: 'When a test fails, waveforms are the ground truth. GTKWave lets you see the exact value of every signal at every clock edge, trace a single instruction from fetch to writeback, and identify exactly where the wrong value appears. This is the primary debugging tool for RTL and cannot be replaced by code inspection alone.',
+        used: ['lib', 'sc', 'pipe'],
+        depth: 'Practical',
+        mustKnow: ['$dumpfile("out.vcd") and $dumpvars(0, tb) in testbench', 'iverilog -o sim.out tb.sv module.sv && ./sim.out', 'Loading VCD in GTKWave, organizing signal groups', 'Using markers, zoom, and signal search', 'Reading hexadecimal signal values in GTKWave'],
+        inProject: ['Every testbench generates a .vcd in sim/', 'sim/run.sh opens GTKWave automatically on failure (optional)', 'Saved GTKWave workspaces (.gtkw) go in docs/waveforms/'],
+        code: '// In every testbench:\ninitial begin\n  $dumpfile("sim/tb_alu.vcd");\n  $dumpvars(0, tb_alu); // dump all\n  // ... tests ...\nend\n\n// Then: iverilog -o sim/tb_alu \\\n//   tb/tb_alu.sv rtl/alu.sv\n// ./sim/tb_alu\n// gtkwave sim/tb_alu.vcd',
+        ref: [{ title: 'GTKWave User\'s Guide (gtkwave.sourceforge.net)', note: 'Free online manual. Sections on markers and saved state are most useful.' }]
+      },
+      {
+        name: 'Assertions (SVA Basics)',
+        short: 'Immediate and concurrent assertions. Property specification. Auto-checking design invariants.',
+        desc: 'SystemVerilog assertions let you embed the specification directly into the testbench as executable properties. Instead of just checking results, assertions check that constraints are never violated throughout the simulation. For MERIDIAN, you can assert that x0 is always 0, that pc is always word-aligned, that memory writes only happen when dmem_wr_en is high.',
+        used: ['lib', 'sc', 'pipe', 'pf'],
+        depth: 'Good Practice',
+        mustKnow: ['Immediate assertion: assert(expr) inside procedural blocks', 'assert property with $past for timing-based checks', 'cover property for tracking reachability', '$fatal vs $error vs $warning severity levels'],
+        inProject: ['assert(regfile[0] == 32\'b0) after every clock', 'assert(pc[1:0] == 2\'b00) // word alignment', 'assert(!(dmem_wr_en && dmem_rd_en)) // no simultaneous RW'],
+        code: '// Immediate assertion\nassert (result != \'x)\n  else $error("X propagation in ALU");\n\n// Concurrent property\nproperty x0_always_zero;\n  @(posedge clk) regfile[0] == 32\'b0;\nendproperty\nassert property (x0_always_zero);',
+        ref: [{ title: 'Vijayaraghavan & Ramanathan — A Practical Guide to SystemVerilog Assertions', note: 'The SVA reference book. Chapters 2–4 cover what MERIDIAN needs.' }]
+      },
+      {
+        name: 'Regression Testing & CI',
+        short: 'sim/run.sh: automated script that runs all testbenches and reports pass/fail. Never let main break.',
+        desc: 'MERIDIAN mandates that main is always passing. sim/run.sh is the enforcer: a bash script that runs every testbench, checks return codes, and reports the count of passing/failing tests. This is the minimal version of what industrial teams call a regression suite. Running it before every merge to main is non-negotiable.',
+        used: ['lib', 'sc', 'pipe', 'pf'],
+        depth: 'Process',
+        mustKnow: ['Bash scripting: loops, exit codes, conditionals', 'iverilog command-line usage and return codes', 'Git hooks (optional but powerful): pre-commit hook that runs sim/run.sh', 'Tracking pass/fail counts over time'],
+        inProject: ['sim/run.sh is the gating check for all merges to main', 'Every wip/ branch must show 0 failures before merge', 'v0.1/v0.2/v0.3/v1.0 tags only applied after run.sh passes'],
+        code: '#!/bin/bash\nFAIL=0\nfor tb in tb/*.sv; do\n  iverilog -o /tmp/sim \\\n    $tb rtl/*.sv && /tmp/sim\n  if [ $? -ne 0 ]; then\n    echo "FAIL: $tb"\n    FAIL=$((FAIL+1))\n  fi\ndone\necho "$FAIL test(s) failed"\nexit $FAIL',
+        ref: [{ title: 'Pro Git Book (git-scm.com/book)', note: 'Chapter on Git hooks — relevant for automated sim on commit.' }]
+      },
+    ]
+  },
+  {
+    id: 'tools',
+    icon: '🛠',
+    color: '#64748b',
+    title: 'Tools, Environment & Portfolio',
+    difficulty: 'Practical',
+    diffColor: '#94a3b8',
+    phases: ['prereq', 'pf'],
+    topics: [
+      {
+        name: 'iverilog + GTKWave Workflow',
+        short: 'Icarus Verilog: open-source SV simulator. GTKWave: waveform viewer. The MERIDIAN simulation stack.',
+        desc: 'iverilog compiles SystemVerilog source into an executable simulator. Running that executable produces .vcd waveform files. GTKWave opens and displays those waveforms. This chain — write RTL, compile with iverilog, simulate, inspect in GTKWave — is the core workflow for every session in MERIDIAN.',
+        used: ['prereq', 'lib', 'sc', 'pipe'],
+        depth: 'Practical',
+        mustKnow: ['iverilog -g2012 -o sim tb.sv rtl.sv (compile)', './sim (run simulation, generates .vcd)', 'gtkwave output.vcd (open waveforms)', '-Wall flag for warnings', 'Verilator for lint and fast simulation (optional but valuable)'],
+        inProject: ['sim/run.sh automates the compile-run-check chain', 'VS Code task to run simulation on save (optional)', 'Verilator --lint-only for faster feedback on syntax/logic errors'],
+        code: '# Full workflow for one module\niverilog -g2012 -Wall \\\n  -o sim/tb_alu \\\n  tb/tb_alu.sv rtl/alu.sv\n./sim/tb_alu\n# On failure:\ngtkwave sim/tb_alu.vcd \\\n  docs/waveforms/alu.gtkw',
+        ref: [{ title: 'iverilog.icarus.com', note: 'Official Icarus Verilog documentation and FAQ.' }, { title: 'GTKWave docs: gtkwave.sourceforge.net', note: 'User guide and keyboard shortcut reference.' }]
+      },
+      {
+        name: 'Git Discipline & Version Control',
+        short: 'Branch naming, commit format, merge rules, tagging. MERIDIAN\'s non-negotiable Git protocol.',
+        desc: 'The MERIDIAN git discipline is not optional — it is the evidence that you work like a professional engineer, not a student. Branch naming (wip/wk3-s2-decoder), commit format ([Wk3-S2] decoder: add S-type immediate), and the rule that main is always passing are all behaviors that hiring managers will look for in your GitHub commit history.',
+        used: ['prereq', 'lib', 'sc', 'pipe', 'pf'],
+        depth: 'Process',
+        mustKnow: ['git checkout -b wip/wk3-s2-decoder (branch)', 'git add -p (stage hunks, not whole files)', 'git commit -m "[Wk3-S2] module: change" (format)', 'git tag -a v0.1 -m "message" (annotated tags)', 'git log --oneline --graph (visualize history)'],
+        inProject: ['Every session ends with at least one commit', 'No direct pushes to main — always merge from wip/', 'Tags v0.1, v0.2, v0.3, v1.0 are milestone markers'],
+        code: '# MERIDIAN git workflow\ngit checkout -b wip/wk2-s1-alu\n# ... write alu.sv, tb_alu.sv ...\nbash sim/run.sh  # must pass\ngit add rtl/alu.sv tb/tb_alu.sv\ngit commit -m "[Wk2-S1] alu: all 11 ops passing"\ngit checkout main\ngit merge wip/wk2-s1-alu\ngit tag -a v0.1 -m "alu passing"',
+        ref: [{ title: 'Pro Git (git-scm.com/book)', note: 'Free, definitive Git reference. Read Chapters 1–3 before starting.' }]
+      },
+      {
+        name: 'Documentation as Engineering Artifact',
+        short: 'microarch.md, architecture.md, session_log.md, FUTURE.md. Documentation that proves design intent.',
+        desc: 'The MERIDIAN documentation is not busywork — it is the artifact that transforms your GitHub repo from "student project" to "engineering portfolio." An interviewer who sees a complete microarch.md with signal widths, directions, and rationale understands immediately that you think like a hardware engineer, not a student copying from a tutorial.',
+        used: ['prereq', 'lib', 'sc', 'pipe', 'pf'],
+        depth: 'Process',
+        mustKnow: ['Markdown formatting for technical docs', 'ASCII block diagrams for hardware topology', 'Signal tables (name, width, direction, description)', 'Session logging as a professional habit', 'FUTURE.md as a scope-control tool'],
+        inProject: ['docs/microarch.md: all 56 signals with explanations', 'docs/architecture.md: block diagram + control truth table', 'docs/session_log.md: updated every session', 'docs/FUTURE.md: scope overflow bin'],
+        code: '# session_log.md format\n## Wk3-S2 | 2024-11-14\n**Deliverable:** decoder.sv passing I-type\n**Status:** DONE\n**Commits:** [Wk3-S2] decoder: I-type imm ext\n**Blockers:** none\n**Next:** S-type and B-type immediates',
+        ref: [{ title: 'Google Developer Documentation Style Guide', note: 'developers.google.com/style — free, world-class technical writing reference.' }]
+      },
+      {
+        name: 'Portfolio & Interview Preparation',
+        short: 'README structure, waveform screenshots, talking points. Turning the repo into an interview asset.',
+        desc: 'The MERIDIAN-PF phase is entirely about converting the technical work into career leverage. A well-structured README with architecture diagrams, a waveform screenshot showing a successful LW instruction, and a clear explanation of what each phase delivered will differentiate you from candidates who also built CPUs but can\'t explain their own design decisions.',
+        used: ['pf'],
+        depth: 'Career',
+        mustKnow: ['README structure: what, why, how, results, structure', 'Key talking points: design decisions and their rationale', 'Waveform screenshots annotated with signal names', '"What would you do differently?" — always have an answer', 'The 2-minute verbal walkthrough of your CPU'],
+        inProject: ['README.md with badges, architecture diagram, feature list', 'docs/waveforms/: annotated screenshots per instruction type', 'Interview prep: 10 design decision questions with answers'],
+        code: '# README structure\n## MERIDIAN — RV32I CPU in SystemVerilog\n> 37 RV32I instructions | 3-stage pipeline\n> iverilog verified | GTKWave waveforms\n\n## Architecture\n[block diagram]\n\n## What I Learned\n[honest reflection]\n\n## How to Run\ngit clone ...\nbash sim/run.sh',
+        ref: [{ title: 'lowRISC ibex README (github.com/lowrisc/ibex)', note: 'Example of an outstanding CPU project README from a professional team.' }]
+      },
+    ]
+  }
+];
+
+// ─────────────────────────────────────────────────────
+// RENDER
+// ─────────────────────────────────────────────────────
+let currentPhase = 'all';
+let openPanel = null;
+
+function renderAll() {
+  const main = document.getElementById('mainContent');
+  main.innerHTML = '';
+
+  DOMAINS.forEach(domain => {
+    const el = buildDomain(domain);
+    main.appendChild(el);
+  });
+
+  filterByPhase(currentPhase);
+}
+
+function buildDomain(domain) {
+  const div = document.createElement('div');
+  div.className = 'domain';
+  div.dataset.domainId = domain.id;
+  div.dataset.phases = domain.phases.join(',');
+
+  const phaseDots = domain.phases.map(p =>
+    `<div class="phase-tag" style="background:${PHASE_COLORS[p]}"></div>`
+  ).join('');
+
+  div.innerHTML = `
+    <div class="domain-header" onclick="toggleDomain('${domain.id}')">
+      <div class="domain-icon" style="background:${domain.color}22; color:${domain.color}">${domain.icon}</div>
+      <div class="domain-title" style="color:${domain.color}">${domain.title}</div>
+      <div class="domain-meta">
+        <div class="phase-tags">${phaseDots}</div>
+        <span class="difficulty-badge" style="background:${domain.diffColor}22; color:${domain.diffColor}; border:1px solid ${domain.diffColor}44">${domain.difficulty}</span>
+        <span class="chevron">▶</span>
+      </div>
+    </div>
+    <div class="domain-body">
+      <div class="topics-grid" id="grid-${domain.id}"></div>
+    </div>
+  `;
+
+  const grid = div.querySelector(`#grid-${domain.id}`);
+  domain.topics.forEach(topic => {
+    const card = buildTopicCard(topic, domain);
+    grid.appendChild(card);
+  });
+
+  return div;
+}
+
+function buildTopicCard(topic, domain) {
+  const btn = document.createElement('button');
+  btn.className = 'topic-card';
+  btn.dataset.phases = topic.used.join(',');
+  btn.dataset.name = topic.name.toLowerCase();
+  btn.dataset.desc = topic.short.toLowerCase();
+
+  const tags = topic.used.map(p =>
+    `<span class="where-used" style="color:${PHASE_COLORS[p]}; border-color:${PHASE_COLORS[p]}44">${p.toUpperCase()}</span>`
+  ).join('');
+
+  const depthColor = {
+    'Foundation': '#6366f1',
+    'Core': '#10b981',
+    'Deep': '#7c3aed',
+    'Practical': '#f59e0b',
+    'Good Practice': '#06b6d4',
+    'Process': '#64748b',
+    'Career': '#ef4444'
+  }[topic.depth] || '#64748b';
+
+  btn.innerHTML = `
+    <div class="topic-name">${topic.name}</div>
+    <div class="topic-desc">${topic.short}</div>
+    <div class="topic-footer">
+      ${tags}
+      <div style="margin-left:auto; display:flex; align-items:center; gap:6px;">
+        <div class="depth-dot" style="background:${depthColor}"></div>
+        <span style="font-size:10px; color:${depthColor}; font-family:var(--mono); letter-spacing:0.08em">${topic.depth}</span>
+      </div>
+    </div>
+  `;
+
+  btn.onclick = () => openDetailPanel(topic, domain);
+  return btn;
+}
+
+function openDetailPanel(topic, domain) {
+  const panel = document.getElementById('detailPanel');
+  const content = document.getElementById('detailContent');
+  const overlay = document.getElementById('overlay');
+
+  const inProjectItems = (topic.inProject || []).map(i => `<li>${i}</li>`).join('');
+  const mustKnowItems = (topic.mustKnow || []).map(i => `<li>${i}</li>`).join('');
+  const refItems = (topic.ref || []).map(r =>
+    `<div class="ref-item"><strong>${r.title}</strong>${r.note}</div>`
+  ).join('');
+
+  const tags = topic.used.map(p =>
+    `<span class="where-used" style="color:${PHASE_COLORS[p]}; border-color:${PHASE_COLORS[p]}44; margin-right:6px">${p.toUpperCase()}</span>`
+  ).join('');
+
+  content.innerHTML = `
+    <div class="detail-tag" style="color:${domain.color}">${domain.icon} ${domain.title}</div>
+    <div class="detail-title">${topic.name}</div>
+    <div style="margin-bottom:16px">${tags}</div>
+    <div class="detail-desc">${topic.desc}</div>
+
+    <div class="detail-section">
+      <div class="detail-section-title">What You Must Know</div>
+      <ul class="detail-list">${mustKnowItems}</ul>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-section-title">Where It Appears in MERIDIAN</div>
+      <ul class="detail-list">${inProjectItems}</ul>
+    </div>
+
+    ${topic.code ? `
+    <div class="detail-section">
+      <div class="detail-section-title">Code Sketch</div>
+      <div class="code-snippet">${topic.code.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+    </div>` : ''}
+
+    ${refItems ? `
+    <div class="detail-section">
+      <div class="detail-section-title">References</div>
+      ${refItems}
+    </div>` : ''}
+  `;
+
+  panel.classList.add('open');
+  overlay.classList.add('active');
+}
+
+function closePanel() {
+  document.getElementById('detailPanel').classList.remove('open');
+  document.getElementById('overlay').classList.remove('active');
+}
+
+function toggleDomain(id) {
+  const el = document.querySelector(`[data-domain-id="${id}"]`);
+  el.classList.toggle('open');
+}
+
+function expandAll() {
+  document.querySelectorAll('.domain:not(.hidden)').forEach(d => d.classList.add('open'));
+}
+
+function collapseAll() {
+  document.querySelectorAll('.domain').forEach(d => d.classList.remove('open'));
+}
+
+function filterByPhase(phase) {
+  currentPhase = phase;
+  document.querySelectorAll('.phase-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.phase === phase);
+  });
+
+  document.querySelectorAll('.domain').forEach(domain => {
+    const domainPhases = domain.dataset.phases.split(',');
+    const domainMatch = phase === 'all' || domainPhases.includes(phase);
+
+    let anyVisible = false;
+    domain.querySelectorAll('.topic-card').forEach(card => {
+      const cardPhases = card.dataset.phases.split(',');
+      const cardMatch = phase === 'all' || cardPhases.includes(phase);
+      card.style.display = cardMatch ? '' : 'none';
+      if (cardMatch) anyVisible = true;
+    });
+
+    domain.classList.toggle('hidden', !domainMatch && !anyVisible);
+  });
+}
+
+function searchTopics(query) {
+  const q = query.toLowerCase().trim();
+  document.querySelectorAll('.topic-card').forEach(card => {
+    if (!q) {
+      card.style.display = '';
+      card.classList.remove('highlighted');
+      return;
+    }
+    const match = card.dataset.name.includes(q) || card.dataset.desc.includes(q);
+    card.style.display = match ? '' : 'none';
+    card.classList.toggle('highlighted', match && q.length > 2);
+  });
+
+  // Show all domains when searching
+  if (q) {
+    document.querySelectorAll('.domain').forEach(d => {
+      d.classList.remove('hidden');
+      d.classList.add('open');
+    });
+  } else {
+    filterByPhase(currentPhase);
+  }
+}
+
+// Wire up events
+document.querySelectorAll('.phase-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.getElementById('searchInput').value = '';
+    filterByPhase(btn.dataset.phase);
+  });
+});
+
+document.getElementById('searchInput').addEventListener('input', e => {
+  searchTopics(e.target.value);
+});
+
+// Init
+renderAll();
+// Open all by default
+expandAll();
+</script>
+</body>
+</html>
